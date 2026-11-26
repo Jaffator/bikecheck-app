@@ -42,14 +42,6 @@ const DESKTOP_HEADER_PAD_TOP = 24;
 const DESKTOP_HEADER_PAD_BOTTOM = 4;
 const DESKTOP_HEADER_ROW = 40;
 
-// The tab bar's graphite: lighter than the Pro card's and about 85 % opaque, so it reads through the blur.
-const TAB_BAR_METAL: CSSProperties = {
-  background:
-    "linear-gradient(112deg, rgba(42, 39, 34, 0.86) 0%, rgba(26, 24, 21, 0.86) 20%, rgba(50, 47, 41, 0.86) 38%, rgba(62, 58, 51, 0.86) 45%, rgba(36, 34, 30, 0.86) 55%, rgba(21, 20, 18, 0.86) 74%, rgba(33, 31, 27, 0.86) 100%)",
-  border: "1px solid rgba(255, 255, 255, 0.1)",
-  boxShadow: "inset 0 1px 0 0 rgba(255, 255, 255, 0.22), 0 10px 24px -10px rgba(0, 0, 0, 0.7)",
-};
-
 // Maps routes to translated header titles; Home intentionally has none.
 const PAGE_TITLE_KEYS: Record<string, string> = {
   // More specific route prefixes must precede their parent routes.
@@ -449,8 +441,10 @@ export function AppLayout(): ReactElement {
             w={BAR_WIDTH}
             grow
             px="xs"
-            className="rounded-3xl backdrop-blur-xl"
-            style={TAB_BAR_METAL}
+            className="rounded-3xl border border-neutral-700 bg-cards-600/30 backdrop-blur-xl"
+            style={{
+              boxShadow: "0 6px 20px color-mix(in srgb, var(--mantine-color-text-6) 15%, transparent)",
+            }}
           >
             {NAV_ITEMS.map(({ labelKey, path, icon: Icon, icon_fill: IconFill }) => {
               // The More tab stands for a sheet rather than a route, so it reads as active
