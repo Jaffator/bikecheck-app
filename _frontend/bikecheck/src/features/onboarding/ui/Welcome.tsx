@@ -52,6 +52,8 @@ export function Welcome({ onSkip, onAddBike }: WelcomeProps): ReactElement | nul
       closeOnClickOutside={false}
       transitionProps={{ duration: 0 }}
       zIndex={Z_INDEX}
+      // Not on Modal.Content: Mantine puts its style on the full-screen wrapper too.
+      styles={isDesktop ? { content: { border: "1px solid var(--color-border-strong)" } } : undefined}
     >
       <Modal.Overlay backgroundOpacity={0.7} blur={4} />
       <Modal.Content

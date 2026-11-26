@@ -11,6 +11,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { UserThrottlerGuard } from './_guards/user-throttler.guard';
 import { hidePdfTicket } from './report/report-pdf.service';
 import { BikeModule } from './bike/bike.module';
+import { BillingModule } from './billing/billing.module';
 import { BikeEventModule } from './bike-event/bike-event.module';
 import { ComponentModuleModule } from './component/component.module';
 import { OrganizationModule } from './organization/organization.module';
@@ -115,6 +116,7 @@ const lokiHost = process.env.LOKI_HOST ?? (isProductionEnv ? undefined : 'http:/
     AuthModule,
     RefreshTokenModule,
     BikeModule,
+    BillingModule,
     BikeEventModule,
     ComponentModuleModule,
     StorageModule,

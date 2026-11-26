@@ -58,7 +58,10 @@ export function WelcomeIntro({ onStart, onSkip }: WelcomeIntroProps): ReactEleme
 
       <Stack gap={0} align="center" justify="center" ta="center" style={{ flex: "1 1 auto", minHeight: 0 }}>
         <WelcomeMark />
+        {/* The dialog opens focused on its heading: the first button would be Skip, ringed on desktop. */}
         <Modal.Title
+          data-autofocus
+          tabIndex={-1}
           className="welcome-rise"
           mt={32}
           fz={32}
@@ -66,7 +69,7 @@ export function WelcomeIntro({ onStart, onSkip }: WelcomeIntroProps): ReactEleme
           fw={700}
           lts="var(--tracking-display)"
           c="text.6"
-          style={{ ...rise(980), textWrap: "balance" }}
+          style={{ ...rise(980), textWrap: "balance", outline: "none" }}
         >
           {t("onboarding.welcome.intro.title")}
         </Modal.Title>

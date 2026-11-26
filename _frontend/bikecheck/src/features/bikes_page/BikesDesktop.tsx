@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { dropdownProps, inputStyles } from "@/features/add_bike_page/formStyles";
+import { useAddBikeGate } from "@/features/billing/useAddBikeGate";
 import { BIKE_SORTS, parseBikeSort, sortBikes, type BikeSort } from "@/features/bikes/bikeSort";
 import { useArchivedBikes, useBikes } from "@/features/bikes/bikes.queries";
 import { ArchivedBikesTable } from "@/features/bikes/ui/ArchivedBikesTable";
@@ -33,7 +34,7 @@ function parseBikesTab(raw: string | null): BikesTab {
 
 export function BikesDesktop(): ReactElement {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const enterAddBike = useAddBikeGate();
   const setActionSlot = useHeaderStore((state) => state.setActionSlot);
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: bikes } = useBikes();
@@ -71,14 +72,14 @@ export function BikesDesktop(): ReactElement {
           c="textDark.6"
           radius="md"
           leftSection={<Plus size={16} />}
-          onClick={() => navigate(ADD_BIKE.path)}
+          onClick={() => void enterAddBike()}
         >
           {t(ADD_BIKE.labelKey)}
         </Button>
       </Group>,
     );
     return () => setActionSlot(null);
-  }, [setActionSlot, t, navigate]);
+  }, [setActionSlot, t, enterAddBike]);
 
   const activeCount = bikes?.length ?? 0;
   const archivedCount = archived?.length ?? 0;

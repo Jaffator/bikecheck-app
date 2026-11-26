@@ -40,16 +40,29 @@ expires it. Read-only while archived, and unpaired from Strava (ADR 0024).
 _Avoid_: Deleted bike, retired bike, bin
 
 **Pro**:
-The paid plan: any number of Bikes in use and AI chat with no monthly limit. Belongs to the account,
-not the device. Without it an account is on **Free**: its first Bike and 100 AI questions a month.
+Any number of Bikes in use and AI chat with no monthly limit. An account has it either paid for or
+from a Key. Belongs to the account, not the device.
 _Avoid_: Premium, subscription
 
+**Free**:
+What an account without Pro is on: one Bike and 100 AI questions a month. Every Bike it has counts,
+archived ones included; only Deleting a Bike frees its place. At the limit nothing but adding a Bike
+is refused: restoring an Archived Bike always works, and an account over the limit keeps them all.
+_Avoid_: Trial, basic plan
+
+**Key**:
+A code the owner sends privately to early users, which gives an account Pro for free, with no end. One
+Key is shared by many accounts, up to its own cap; an account uses one at most, and a deleted account
+gives its use back. Changing, switching off or deleting a Key never takes back what it gave.
+_Avoid_: Promo code, voucher, coupon
+
 **Locked Bike**:
-A Bike beyond the first on an account without Pro. It stays in the garage, greyed out, and does
+A Bike beyond the free ones on an account without Pro. It stays in the garage, greyed out, and does
 nothing until unlocked: no wear, no notifications, no place in lists or totals. Rides on it while
 locked wait as Unassigned Rides and land on it once it is unlocked. Unlike an Archived Bike, it is
 not the owner's act. An Archived first Bike keeps its free place; only deleting it frees that place,
-for the oldest remaining Bike.
+for the oldest remaining Bike. Comes with paid Pro; until Pro is sold no Bike is ever locked, as Pro from a Key
+has no end.
 _Avoid_: Inactive bike, disabled bike
 
 **Deleting a Bike**:

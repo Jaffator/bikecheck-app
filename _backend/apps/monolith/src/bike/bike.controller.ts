@@ -77,6 +77,7 @@ export class BikeController {
     },
   })
   @ApiResponse({ status: 201, type: ResponseBikeDto })
+  @ApiResponse({ status: 403, description: 'BIKE_LIMIT_REACHED' })
   @UseInterceptors(FileInterceptor('image', BIKE_IMAGE_UPLOAD))
   async createBike(
     @CurrentUser('userId') userId: string,

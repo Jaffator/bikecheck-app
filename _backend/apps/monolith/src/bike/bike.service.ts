@@ -12,6 +12,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ownedBikeWhere, OwnedBikeOptions } from './owned-bike.where';
 import { colorIndexes } from './color-index';
 import { StorageService } from '../storage/storage.service';
+import { BillingService } from '../billing/billing.service';
 import { downloadPublicImage } from './safe-image-download';
 import 'dotenv/config';
 import { Prisma, bikes } from '@prisma/client';
@@ -21,6 +22,7 @@ export class BikeService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
+    private readonly billingService: BillingService,
     @InjectPinoLogger(BikeService.name) private readonly logger: PinoLogger,
   ) {}
 
@@ -50,6 +52,8 @@ export class BikeService {
     createBikeData: CreateBikeWithComponentsDto,
     image?: Express.Multer.File,
   ): Promise<ResponseBikeDto> {
+    await this.billingService.requireBikePlace(userId);
+
     let imageUrl = createBikeData.bike.image_url;
     console.log('Image URL BEFORE:', imageUrl);
     if (image) {
@@ -78,6 +82,8 @@ export class BikeService {
       bike_type_id: bikeType?.id,
     };
     return await this.prisma.$transaction(async (db) => {
+      await this.billingService.holdBikePlace(db, userId);
+
       // 1.create a new Bike
       const bike = await db.bikes.create({ data: { ...bikeToSave } });
 

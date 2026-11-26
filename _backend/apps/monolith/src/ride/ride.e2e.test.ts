@@ -112,6 +112,8 @@ describe('RideController (e2e)', () => {
 
     // ARRANGE: the owner has two bikes and two rides last spring; the stranger has one bike.
     ownerId = await registerVerified(owner);
+    // Free is one bike; the owner needs two.
+    await prisma.users.update({ where: { id: ownerId }, data: { bike_limit: 2 } });
     ownerToken = await login(owner);
     bikeId = await createBike(ownerToken, 'Santa Cruz', 'Hightower');
     otherBikeId = await createBike(ownerToken, 'Canyon', 'Spectral');

@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client';
 import { BikeService } from './bike.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { BillingService } from '../billing/billing.service';
 import { StatsService } from '../stats/stats.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
 
@@ -106,6 +107,7 @@ describe('BikeService', () => {
         BikeService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: StorageService, useValue: mockStorageService },
+        { provide: BillingService, useValue: {} },
         { provide: getLoggerToken(BikeService.name), useValue: mockLogger },
         StatsService,
         { provide: ServiceTrackingService, useValue: {} },

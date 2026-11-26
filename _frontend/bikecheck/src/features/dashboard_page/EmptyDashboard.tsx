@@ -2,16 +2,16 @@
 import type { ReactElement } from "react";
 import { Box, Button, Group, Stack, Text } from "@mantine/core";
 import { Trans, useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { Lightbulb } from "lucide-react";
 import { EmptyStateLayout } from "@/components/EmptyStateLayout";
+import { useAddBikeGate } from "@/features/billing/useAddBikeGate";
 import { useCurrentUser } from "@/features/users/users.queries";
 import graphPlaceholder from "@/assets/images/empty_dashboard_graph.png";
 
 // Show the empty Home tab.
 export function EmptyDashboard(): ReactElement {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const enterAddBike = useAddBikeGate();
   // Read the cached user.
   const { data: user } = useCurrentUser();
 
@@ -25,7 +25,7 @@ export function EmptyDashboard(): ReactElement {
       body={t("dashboard.getStarted")}
     >
       {/* Nothing here works until there is a bike, so the one way forward is a button. */}
-      <Button variant="filled" radius="md" size="md" fullWidth onClick={() => navigate("/bikes/new")}>
+      <Button variant="filled" radius="md" size="md" fullWidth onClick={() => void enterAddBike()}>
         {t("dashboard.addBike")}
       </Button>
 

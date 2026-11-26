@@ -30,8 +30,9 @@ export function StravaConnectDesktop({ onConnect, onSkip, connecting }: StravaCo
         w="100%"
         maw={1080}
         mih={720}
-        className="flex flex-wrap overflow-hidden"
-        style={cardSurface}
+        className="flex-wrap overflow-hidden"
+        // Inline: Paper's own display: block beats a flex class, and the photo fell under the text as a strip.
+        style={{ ...cardSurface, display: "flex" }}
       >
         <Box className="flex flex-col justify-center gap-9" px={56} py={64} style={{ flex: "1 1 420px" }}>
           <BrandMark />
@@ -42,8 +43,8 @@ export function StravaConnectDesktop({ onConnect, onSkip, connecting }: StravaCo
 
           <Box component="ul" m={0} p={0} maw={520} className="grid grid-cols-2 gap-x-7 gap-y-6 list-none">
             {BENEFITS.map(({ key, Icon }) => (
-              <Box component="li" key={key} className="flex flex-col gap-2.5">
-                <Icon size={20} color="var(--mantine-color-primary-6)" />
+              <Box component="li" key={key} className="flex items-start gap-3">
+                <Icon size={20} color="var(--mantine-color-primary-6)" className="shrink-0" />
                 <Text fz={15} lh={1.4} c="var(--color-text-bright)">
                   {t(`addBike.${key}`)}
                 </Text>

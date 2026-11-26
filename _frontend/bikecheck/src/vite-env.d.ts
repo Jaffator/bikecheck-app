@@ -10,6 +10,10 @@ interface ImportMetaEnv {
   // Umami; either one empty and the tracker never loads.
   readonly VITE_UMAMI_WEBSITE_ID?: string;
   readonly VITE_UMAMI_SCRIPT_URL?: string;
+  // Development only, see docs/dev-setup.md.
+  readonly VITE_PRO_SALES?: string;
+  readonly VITE_PRO_PLATFORM?: string;
+  readonly VITE_PRO_PAYMENT?: string;
 }
 
 interface ImportMeta {

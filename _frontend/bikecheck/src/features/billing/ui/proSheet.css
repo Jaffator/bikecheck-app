@@ -1,0 +1,483 @@
+/* The Pro sheet. Only the card's metal and the foil of its mark are colours of their own. */
+.pro-sheet {
+  --pro-metal: linear-gradient(
+    112deg,
+    #1b1916 0%,
+    #11100e 18%,
+    #26241f 34%,
+    #302d28 40%,
+    #211f1b 47%,
+    #0d0c0b 62%,
+    #171513 78%,
+    #0a0a09 100%
+  );
+  --pro-metal-edge:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.42), inset 1px 0 0 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 8px 14px -8px rgba(0, 0, 0, 0.45);
+  --pro-foil: linear-gradient(
+    to bottom right,
+    var(--mantine-color-primary-4),
+    var(--mantine-color-primary-6) 50%,
+    #9c9140
+  );
+  --pro-metal-unpaid: linear-gradient(150deg, #242322 0%, #191817 60%);
+  --pro-mark-unpaid: #3a3833;
+  --pro-card-height: 212px;
+  --pro-card-pad: 20px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* With the keyboard up, the key and its button have to fit above it. */
+.pro-sheet--typing {
+  --pro-card-height: 168px;
+
+  gap: 16px;
+}
+
+.pro-sheet--typing .pro-sheet__step {
+  gap: 16px;
+}
+
+.pro-sheet__step {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: pro-step 300ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.pro-card {
+  flex-shrink: 0;
+  width: 100%;
+  height: var(--pro-card-height);
+  perspective: 1400px;
+  transition: height 420ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.pro-card__turn {
+  position: relative;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 620ms cubic-bezier(0.3, 0, 0.1, 1);
+}
+
+.pro-card--turned .pro-card__turn {
+  transform: rotateY(180deg);
+}
+
+.pro-card__face {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 16px;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.pro-card__face--front {
+  background: var(--pro-metal);
+  box-shadow: var(--pro-metal-edge);
+  color: var(--mantine-color-primary-6);
+}
+
+.pro-card__face--back {
+  border: 1px solid var(--mantine-color-inputs-5);
+  background: var(--color-surface-well);
+  transform: rotateY(180deg);
+}
+
+.pro-card__name {
+  position: absolute;
+  top: var(--pro-card-pad);
+  left: var(--pro-card-pad);
+}
+
+.pro-card__foot {
+  position: absolute;
+  inset: auto var(--pro-card-pad) var(--pro-card-pad);
+}
+
+/* The shadow along the foil's lower edge presses the mark into the metal. */
+.pro-card__mark {
+  position: absolute;
+  top: 58px;
+  right: var(--pro-card-pad);
+  width: 118px;
+  aspect-ratio: 282 / 175;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.5));
+  transition:
+    top 420ms cubic-bezier(0.2, 0, 0, 1),
+    width 420ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.pro-card__mark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--pro-foil);
+  -webkit-mask: url("../../../assets/icons/bikecheck/bikecheck.svg") center / contain no-repeat;
+  mask: url("../../../assets/icons/bikecheck/bikecheck.svg") center / contain no-repeat;
+}
+
+/* Not paid: the card goes grey, only the heading of the step is red. */
+.pro-card[data-step="paymentFailed"] {
+  animation: pro-shake 420ms cubic-bezier(0.3, 0, 0.2, 1) 250ms;
+}
+
+.pro-card[data-step="paymentFailed"] .pro-card__face--front {
+  background: var(--pro-metal-unpaid);
+  color: var(--color-muted);
+}
+
+.pro-card[data-step="paymentFailed"] .pro-card__mark::before {
+  background: var(--pro-mark-unpaid);
+}
+
+.pro-price {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pro-price__amount {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: var(--tracking-display);
+}
+
+.pro-price__period {
+  color: var(--color-text-dim);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.pro-card__run {
+  position: absolute;
+  inset: auto 0 0;
+  height: 4px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--mantine-color-primary-6) 16%, transparent);
+}
+
+/* The summary is long, so on a phone the card makes room for it. */
+@media not all and (min-width: 60em) {
+  .pro-card[data-step="summary"] {
+    --pro-card-height: 88px;
+  }
+
+  .pro-card[data-step="summary"] .pro-card__mark {
+    top: 24px;
+    width: 67px;
+  }
+
+  .pro-card[data-step="summary"] .pro-card__foot {
+    bottom: 18px;
+  }
+
+  .pro-card[data-step="summary"] .pro-price {
+    flex-direction: row;
+    color: var(--color-text-dim);
+  }
+
+  .pro-card[data-step="summary"] .pro-price__amount,
+  .pro-card[data-step="summary"] .pro-price__period {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    letter-spacing: 0;
+  }
+}
+
+.pro-key {
+  position: absolute;
+  inset: auto var(--pro-card-pad) 18px;
+}
+
+.pro-key__input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-bottom: 2px solid var(--color-border-solid);
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  color: var(--mantine-color-text-6);
+  font: 500 18px var(--font-sans);
+}
+
+.pro-key__input::placeholder {
+  color: var(--mantine-color-text-8);
+  opacity: 1;
+}
+
+.pro-key__input[aria-invalid="true"] {
+  border-bottom-color: var(--mantine-color-red-4);
+}
+
+/* Last, so focus shows over a refusal too; the text under the field says that. */
+.pro-key__input:focus {
+  border-bottom-color: var(--mantine-color-primary-6);
+}
+
+.pro-key__run {
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  overflow: hidden;
+}
+
+.pro-key__input:read-only {
+  border-bottom-color: var(--color-border-solid);
+}
+
+.pro-key__run::before,
+.pro-card__run::before {
+  content: "";
+  display: block;
+  width: 35%;
+  height: 100%;
+  background: var(--mantine-color-primary-6);
+  animation: pro-run 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.pro-key__error {
+  margin: 10px 0 0;
+  min-height: 36px;
+}
+
+.pro-check__disc {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pro-disc 450ms cubic-bezier(0.2, 0.9, 0.25, 1) 300ms backwards;
+}
+
+.pro-check__tick {
+  stroke-dasharray: 1;
+  animation: pro-tick 360ms cubic-bezier(0.5, 0, 0.1, 1) 550ms backwards;
+}
+
+.pro-check__tick + .pro-check__tick {
+  animation-delay: 700ms;
+}
+
+.pro-rows {
+  margin: 12px 0 0;
+  font-size: 15px;
+}
+
+.pro-rows__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.pro-sheet__step--summary {
+  gap: 16px;
+  margin-top: -4px;
+}
+
+.pro-sheet__step--summary .pro-rows {
+  margin-top: 4px;
+}
+
+.pro-consent {
+  border-radius: 12px;
+  background: var(--color-surface-raised);
+}
+
+.pro-back {
+  position: absolute;
+  top: var(--sheet-close-inset);
+  left: var(--sheet-close-inset);
+  color: var(--mantine-color-text-8);
+}
+
+.pro-back__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sheet-close-target);
+  height: var(--sheet-close-target);
+  border-radius: 12px;
+}
+
+.pro-back__name {
+  display: none;
+}
+
+/* Focused by script for a screen reader, never by Tab. */
+.pro-heading:focus {
+  outline: none;
+}
+
+@media (min-width: 60em) {
+  .pro-sheet {
+    --pro-card-height: 256px;
+    --pro-card-pad: 24px;
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 372px;
+    gap: 0;
+    min-height: min(640px, 85dvh);
+  }
+
+  .pro-sheet__stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 56px 44px;
+    background: var(--mantine-color-background-9);
+  }
+
+  .pro-sheet__side {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pro-sheet__step {
+    flex: 1;
+    justify-content: space-between;
+    gap: 40px;
+    padding: 56px 32px 32px;
+  }
+
+  .pro-card {
+    max-width: 432px;
+    perspective: 1600px;
+  }
+
+  .pro-card__mark {
+    top: 71px;
+    width: 142px;
+  }
+
+  .pro-card__face--back {
+    background: var(--mantine-color-cards-6);
+  }
+
+  .pro-price__amount {
+    font-size: 48px;
+  }
+
+  .pro-back {
+    position: relative;
+    top: auto;
+    left: auto;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 48px 0 0 18px;
+    color: var(--mantine-color-text-7);
+  }
+
+  .pro-back__name {
+    display: inline;
+    font-size: 15px;
+    line-height: 20px;
+  }
+
+  .pro-sheet__step--summary {
+    justify-content: flex-start;
+    gap: 14px;
+    margin-top: 0;
+    padding-top: 14px;
+  }
+
+  .pro-sheet__step--summary > :last-child {
+    margin-top: auto;
+  }
+
+  .pro-key {
+    bottom: 24px;
+  }
+
+  .pro-key__input {
+    height: 60px;
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: var(--tracking-display);
+  }
+
+  .pro-rows {
+    font-size: 14px;
+  }
+
+  .pro-rows__row {
+    padding: 10px 0;
+  }
+}
+
+@keyframes pro-step {
+  from {
+    transform: translateY(8px);
+  }
+}
+
+@keyframes pro-run {
+  from {
+    transform: translateX(-60%);
+  }
+  to {
+    transform: translateX(285%);
+  }
+}
+
+@keyframes pro-shake {
+  20% {
+    transform: translateX(-7px);
+  }
+  45% {
+    transform: translateX(6px);
+  }
+  70% {
+    transform: translateX(-4px);
+  }
+  88% {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes pro-disc {
+  from {
+    transform: scale(0);
+  }
+}
+
+@keyframes pro-tick {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+/* The steps change at once: no turn, no shake, no drawing, and the running line stands still. */
+@media (prefers-reduced-motion: reduce) {
+  .pro-card,
+  .pro-card__turn,
+  .pro-card__mark {
+    transition: none;
+  }
+
+  .pro-sheet__step,
+  .pro-card[data-step="paymentFailed"],
+  .pro-check__disc,
+  .pro-check__tick {
+    animation: none;
+  }
+
+  .pro-key__run::before,
+  .pro-card__run::before {
+    width: 100%;
+    animation: none;
+  }
+}

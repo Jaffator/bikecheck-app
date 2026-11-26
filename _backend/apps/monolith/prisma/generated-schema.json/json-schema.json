@@ -1486,6 +1486,30 @@
         }
       }
     },
+    "bike_keys": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "code": {
+          "type": "string"
+        },
+        "max_accounts": {
+          "type": "integer"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/users"
+          }
+        }
+      }
+    },
     "users": {
       "type": "object",
       "properties": {
@@ -1645,11 +1669,32 @@
           "type": "boolean",
           "default": true
         },
+        "bike_limit": {
+          "type": "integer",
+          "default": 1
+        },
+        "pro_since": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
         "accounts": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/accounts"
           }
+        },
+        "bike_key": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/bike_keys"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "bikes": {
           "type": "array",
@@ -2192,6 +2237,9 @@
     },
     "account_events": {
       "$ref": "#/definitions/account_events"
+    },
+    "bike_keys": {
+      "$ref": "#/definitions/bike_keys"
     },
     "users": {
       "$ref": "#/definitions/users"

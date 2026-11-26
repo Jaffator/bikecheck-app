@@ -11,8 +11,10 @@ import {
   useCreateBike,
 } from "@/features/bikes/bikes.queries";
 import type { BikeSearchResult, CreateBikePayload } from "@/features/bikes/bikes.types";
+import { isBikeLimitError } from "@/features/billing/bikeLimit";
 import { openStravaAuthorize } from "@/features/strava/strava.queries";
 import { useCurrentUser } from "@/features/users/users.queries";
+import { useBikeLimitStore } from "@/store/store";
 import type { AssembleBikeComponent } from "@/features/components/components.types";
 import { useComponentGroups, useDefaultComponents } from "@/features/components/components.queries";
 import { isBikeSpecificationComplete, SUSPENSION_FLAGS, type BikeSpecificationValues } from "./bikeSpecification.types";
@@ -164,6 +166,7 @@ export function useAddBikeWizard(): AddBikeWizard {
   const { data: currentUser } = useCurrentUser();
   const [connectingStrava, setConnectingStrava] = useState(false);
   const createBike = useCreateBike();
+  const showLimit = useBikeLimitStore((state) => state.show);
 
   const form = useForm<AddBikeIdentityValues>({
     initialValues: {
@@ -175,6 +178,11 @@ export function useAddBikeWizard(): AddBikeWizard {
 
   function nextStep(): void {
     setActive((current) => (current < TOTAL_STEPS - 1 ? current + 1 : current));
+  }
+
+  // Replaced, so Back from the garage does not meet the gate on a wizard already done.
+  function leaveToGarage(): void {
+    navigate("/bikes", { replace: true });
   }
 
   function goToStep(step: number): void {
@@ -462,6 +470,10 @@ export function useAddBikeWizard(): AddBikeWizard {
           setSavedBike(true);
           setSavedBikeId(bike.id);
         },
+        // Over the summary, which keeps everything entered.
+        onError: (error) => {
+          if (isBikeLimitError(error)) showLimit();
+        },
       },
     );
   }
@@ -576,7 +588,7 @@ export function useAddBikeWizard(): AddBikeWizard {
     componentsToSave,
     saveBike,
     isSaving: createBike.isPending,
-    saveFailed: createBike.isError,
+    saveFailed: createBike.isError && !isBikeLimitError(createBike.error),
     saveErrorDetails: namedSaveErrors(),
 
     savedBike,
@@ -588,12 +600,12 @@ export function useAddBikeWizard(): AddBikeWizard {
     pairingGear,
     closeGearPairing: () => {
       setPairingGear(false);
-      navigate("/bikes");
+      leaveToGarage();
     },
     // Continue to pairing when Strava is linked; otherwise offer connection.
     leaveAfterSave: () => {
       if (offeringStrava) {
-        navigate("/bikes");
+        leaveToGarage();
         return;
       }
       if (currentUser?.strava_athlete_id) {
@@ -609,7 +621,7 @@ export function useAddBikeWizard(): AddBikeWizard {
         await openStravaAuthorize();
       } catch {
         setConnectingStrava(false);
-        navigate("/bikes");
+        leaveToGarage();
       }
     },
   };

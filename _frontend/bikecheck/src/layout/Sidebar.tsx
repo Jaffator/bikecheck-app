@@ -1,11 +1,12 @@
 // The desktop shell's navigation: what the tab bar, the FAB, the More sheet and the header's
 // bell and avatar hold on a phone, in one fixed column (ADR 0035).
-import { useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
+import { useState, type CSSProperties, type MouseEvent, type ReactElement, type ReactNode } from "react";
 import { AppShell, Avatar, Box, Button, Divider, Menu, Stack, Text } from "@mantine/core";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Bell, MessageCircleMore, Plus, Users } from "lucide-react";
 import Logo from "@/assets/icons/bikecheck/Logo_white.svg?react";
+import { useAddBikeGate } from "@/features/billing/useAddBikeGate";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useUnreadNotifications } from "@/features/notifications/notifications.queries";
 import { usePendingRides } from "@/features/strava/strava.queries";
@@ -125,6 +126,15 @@ interface NewMenuProps {
 // Two tiles on frosted glass; the column behind them steps back while it is open.
 function NewMenu({ opened, onChange }: NewMenuProps): ReactElement {
   const { t } = useTranslation();
+  const enterAddBike = useAddBikeGate();
+
+  // A click for a new tab stays the link's own; the address meets the gate there.
+  function gateAddBike(event: MouseEvent): void {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    void enterAddBike();
+  }
+
   return (
     <Menu
       opened={opened}
@@ -174,6 +184,7 @@ function NewMenu({ opened, onChange }: NewMenuProps): ReactElement {
               key={path}
               component={Link}
               to={path}
+              onClick={path === ADD_BIKE.path ? gateAddBike : undefined}
               // The tile shows the short word under the menu's own "Add"; a reader hears it whole.
               aria-label={t(labelKey)}
               // A resting tint by class: Mantine's own hover rule still wins over it.

@@ -679,6 +679,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "BIKE_LIMIT_REACHED"
           }
         },
         "tags": [
@@ -1018,6 +1021,69 @@
         },
         "tags": [
           "Bike"
+        ]
+      }
+    },
+    "/api/billing/bike-limit": {
+      "get": {
+        "operationId": "Billing bikeLimit",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeLimitDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "The signed-in account's bike limit, what counts against it and since when it has Pro",
+        "tags": [
+          "Billing"
+        ]
+      }
+    },
+    "/api/billing/redeem-key": {
+      "post": {
+        "operationId": "Billing redeemKey",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RedeemKeyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeLimitDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "KEY_NOT_VALID"
+          },
+          "409": {
+            "description": "KEY_USED_UP"
+          },
+          "429": {
+            "description": "More than 5 attempts a minute"
+          }
+        },
+        "summary": "Redeem a Key for Pro; an account that has Pro gets its current state back",
+        "tags": [
+          "Billing"
         ]
       }
     },
@@ -2870,6 +2936,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishReportDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "",
@@ -5596,6 +5672,54 @@
           "last_ride_at"
         ]
       },
+      "ResponseBikeLimitDto": {
+        "type": "object",
+        "properties": {
+          "bike_limit": {
+            "type": "number",
+            "example": 1,
+            "description": "How many Bikes the account may hold without Pro"
+          },
+          "bike_count": {
+            "type": "number",
+            "example": 1,
+            "description": "Bikes counted against the limit, archived ones included"
+          },
+          "has_archived_bikes": {
+            "type": "boolean",
+            "example": false,
+            "description": "True when an Archived Bike is among the counted"
+          },
+          "pro_since": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "example": "2026-11-25T10:00:00.000Z",
+            "description": "When Pro started, null without Pro. With Pro the limit does not apply"
+          }
+        },
+        "required": [
+          "bike_limit",
+          "bike_count",
+          "has_archived_bikes",
+          "pro_since"
+        ]
+      },
+      "RedeemKeyDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "ABCD-1234",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Letter case and surrounding spaces do not matter"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
       "Attachment_BikeEventDto": {
         "type": "object",
         "properties": {
@@ -7613,6 +7737,10 @@
             "example": "MountainBikeRide",
             "nullable": true
           },
+          "is_private": {
+            "type": "boolean",
+            "example": false
+          },
           "distance_km": {
             "type": "number",
             "example": 42
@@ -7659,6 +7787,7 @@
           "name",
           "summary_polyline",
           "sport_type",
+          "is_private",
           "distance_km",
           "duration_min",
           "elevation_up_m",
@@ -7698,6 +7827,10 @@
             "type": "string",
             "example": "MountainBikeRide",
             "nullable": true
+          },
+          "is_private": {
+            "type": "boolean",
+            "example": false
           },
           "distance_km": {
             "type": "number",
@@ -7739,6 +7872,7 @@
           "name",
           "summary_polyline",
           "sport_type",
+          "is_private",
           "distance_km",
           "duration_min",
           "elevation_up_m",
@@ -7871,6 +8005,15 @@
             "example": 54,
             "nullable": true
           },
+          "summary_polyline": {
+            "type": "string",
+            "example": "ki}fH",
+            "nullable": true
+          },
+          "is_private": {
+            "type": "boolean",
+            "example": false
+          },
           "created_at": {
             "type": "string",
             "example": "2026-08-19T08:40:00.000Z",
@@ -7910,6 +8053,8 @@
           "elevation_down_m",
           "speed_avg",
           "max_speed_kmh",
+          "summary_polyline",
+          "is_private",
           "created_at",
           "wore_off",
           "check_in",
@@ -8028,6 +8173,15 @@
             "example": 54,
             "nullable": true
           },
+          "summary_polyline": {
+            "type": "string",
+            "example": "ki}fH",
+            "nullable": true
+          },
+          "is_private": {
+            "type": "boolean",
+            "example": false
+          },
           "created_at": {
             "type": "string",
             "example": "2026-08-19T08:40:00.000Z",
@@ -8061,6 +8215,8 @@
           "elevation_down_m",
           "speed_avg",
           "max_speed_kmh",
+          "summary_polyline",
+          "is_private",
           "created_at",
           "wore_off",
           "check_in"
@@ -8292,6 +8448,11 @@
             "example": false,
             "description": "A report stays closed until it is published"
           },
+          "share_figures": {
+            "type": "boolean",
+            "example": true,
+            "description": "Km and time from Strava are readable through the link"
+          },
           "view_count": {
             "type": "number",
             "example": 3
@@ -8328,6 +8489,7 @@
           "bike_id",
           "covers",
           "is_public",
+          "share_figures",
           "view_count",
           "last_viewed_at",
           "revoked",
@@ -8373,6 +8535,11 @@
             "example": false,
             "description": "A report stays closed until it is published"
           },
+          "share_figures": {
+            "type": "boolean",
+            "example": true,
+            "description": "Km and time from Strava are readable through the link"
+          },
           "view_count": {
             "type": "number",
             "example": 3
@@ -8405,6 +8572,7 @@
           "bike_id",
           "covers",
           "is_public",
+          "share_figures",
           "view_count",
           "last_viewed_at",
           "revoked",
@@ -8423,6 +8591,19 @@
         },
         "required": [
           "count"
+        ]
+      },
+      "PublishReportDto": {
+        "type": "object",
+        "properties": {
+          "share_figures": {
+            "type": "boolean",
+            "example": true,
+            "description": "Strava-derived km and time may be read through the link"
+          }
+        },
+        "required": [
+          "share_figures"
         ]
       },
       "ResponsePdfTicketDto": {
@@ -8838,6 +9019,10 @@
             "type": "boolean",
             "example": false
           },
+          "share_figures": {
+            "type": "boolean",
+            "example": true
+          },
           "stats": {
             "$ref": "#/components/schemas/ProfileStatsDto"
           },
@@ -8859,6 +9044,7 @@
           "share_setup",
           "share_history",
           "share_costs",
+          "share_figures",
           "stats",
           "suggested_handle",
           "public_origin"
@@ -8896,6 +9082,11 @@
             "type": "boolean",
             "example": false,
             "description": "Meaningful only with share_history"
+          },
+          "share_figures": {
+            "type": "boolean",
+            "example": true,
+            "description": "Consent to publish Strava-derived km and time"
           }
         }
       },
@@ -8926,6 +9117,10 @@
       "ProfileSharesDto": {
         "type": "object",
         "properties": {
+          "figures": {
+            "type": "boolean",
+            "example": true
+          },
           "components": {
             "type": "boolean",
             "example": true
@@ -8944,6 +9139,7 @@
           }
         },
         "required": [
+          "figures",
           "components",
           "setup",
           "history",
@@ -8958,8 +9154,9 @@
             "example": 3
           },
           "distance_km": {
-            "type": "number",
-            "example": 12480
+            "type": "object",
+            "example": 12480,
+            "nullable": true
           },
           "components": {
             "type": "object",
@@ -9039,8 +9236,9 @@
             "nullable": true
           },
           "distance_km": {
-            "type": "number",
-            "example": 4187
+            "type": "object",
+            "example": 4187,
+            "nullable": true
           },
           "components": {
             "type": "object",
@@ -9511,8 +9709,9 @@
             "nullable": true
           },
           "distance_km": {
-            "type": "number",
-            "example": 4187
+            "type": "object",
+            "example": 4187,
+            "nullable": true
           },
           "services": {
             "type": "object",
@@ -9524,8 +9723,9 @@
             "example": "2026-09-12T00:00:00.000Z"
           },
           "time_min": {
-            "type": "number",
-            "example": 15000
+            "type": "object",
+            "example": 15000,
+            "nullable": true
           },
           "ebike": {
             "type": "boolean",
@@ -9598,6 +9798,10 @@
           "owner": {
             "$ref": "#/components/schemas/ProfileOwnerDto"
           },
+          "figures": {
+            "type": "boolean",
+            "example": true
+          },
           "visibility": {
             "type": "string",
             "enum": [
@@ -9635,6 +9839,7 @@
         },
         "required": [
           "owner",
+          "figures",
           "visibility",
           "relation",
           "currency",
@@ -10020,19 +10225,6 @@
               "type": "number"
             }
           },
-          "daily_calories": {
-            "example": [
-              0,
-              820,
-              0,
-              2410
-            ],
-            "description": "kcal per UTC day, indexed like daily_m; a ride without calories burns 0",
-            "type": "array",
-            "items": {
-              "type": "number"
-            }
-          },
           "total_km": {
             "type": "number",
             "example": 51,
@@ -10047,11 +10239,6 @@
             "type": "number",
             "example": 312,
             "description": "The sum of those rides' duration_min"
-          },
-          "calories": {
-            "type": "number",
-            "example": 3230,
-            "description": "The sum of those rides' calories"
           }
         },
         "required": [
@@ -10063,11 +10250,9 @@
           "daily_m",
           "daily_elevation_m",
           "daily_time_min",
-          "daily_calories",
           "total_km",
           "ride_count",
-          "time_min",
-          "calories"
+          "time_min"
         ]
       },
       "Response_DistancePreviousDto": {
@@ -10092,11 +10277,6 @@
             "type": "number",
             "example": 260,
             "description": "Minutes ridden up to the same day"
-          },
-          "calories": {
-            "type": "number",
-            "example": 4120,
-            "description": "kcal burnt up to the same day"
           },
           "daily_m": {
             "example": [
@@ -10136,19 +10316,6 @@
             "items": {
               "type": "number"
             }
-          },
-          "daily_calories": {
-            "example": [
-              700,
-              0,
-              500,
-              2000
-            ],
-            "description": "kcal per day, indexed like daily_m",
-            "type": "array",
-            "items": {
-              "type": "number"
-            }
           }
         },
         "required": [
@@ -10156,11 +10323,9 @@
           "meters",
           "elevation_m",
           "time_min",
-          "calories",
           "daily_m",
           "daily_elevation_m",
-          "daily_time_min",
-          "daily_calories"
+          "daily_time_min"
         ]
       },
       "Response_DistanceDto": {
